@@ -33,6 +33,7 @@ namespace ScheduleParser
 
 			File.WriteAllText("schedule.txt", table.InnerText);
 			Console.WriteLine(table.InnerText);
+			Console.WriteLine("___________________");
 			Console.ReadKey();
 		}
 	}
