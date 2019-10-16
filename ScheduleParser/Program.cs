@@ -21,6 +21,7 @@ namespace ScheduleParser
 			{"вс", CommandType.Sunday},
 			{"старт", CommandType.Start},
 			{"регистрация", CommandType.Registration},
+			{"сейчас", CommandType.Now },
 			{"сегодня", CommandType.Today},
 			{"завтра", CommandType.Tomorrow},
 			{"текущая", CommandType.CurrentWeek},
@@ -43,6 +44,77 @@ namespace ScheduleParser
 			}
 		}
 
+		private static string Bot(string command)
+		{
+			command = command.ToLowerInvariant();
+
+			var sb = new StringBuilder();
+
+			var isContainsKey = _commands.ContainsKey(command);
+
+			if (isContainsKey)
+			{
+				var commandType = _commands[command];
+
+				var nodeCollection = GetNodes(FACULTY, COURSE, GROUP);
+
+				var currentDataTable = ParseTable(nodeCollection);
+				currentDataTable = NormaliseTable(currentDataTable);
+
+				var result = string.Empty;
+
+				switch (commandType)
+				{
+					case CommandType.Start:
+						result = Start();
+						break;
+					case CommandType.Registration:
+						result = $"Введите необходимые данные:)";
+						break;
+					case CommandType.Now:
+						result = $"Команда в разработке...";
+						break;
+					case CommandType.Today:
+						result = $"Команда в разработке...";
+						break;
+					case CommandType.Tomorrow:
+						result = $"Команда в разработке...";
+						break;
+					case CommandType.CurrentWeek:
+						result = $"Команда в разработке...";
+						break;
+					case CommandType.NextWeek:
+						result = $"Команда в разработке...";
+						break;
+
+					default:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+				}
+
+				sb.AppendLine(result);
+			}
+			else
+			{
+				var commandDescription = CommandType.Registration.GetDescription().ToLowerInvariant();
+
+				command = command.ToLowerInvariant();
+
+				if (command.Contains(commandDescription))
+				{
+					var result = Registration(command);
+
+					sb.AppendLine(result);
+				}
+				else
+				{
+					sb.AppendLine($"Давай ближе к делу, я не люблю общаться:)");
+				}
+			}
+
+			return sb.ToString();
+		}
+
 		private static string Start()
 		{
 			var sb = new StringBuilder();
@@ -57,7 +129,7 @@ namespace ScheduleParser
 		private static string Registration(string command)
 		{
 			var sb = new StringBuilder();
-			
+
 			var commandDescription = CommandType.Registration.GetDescription().ToLowerInvariant();
 
 			command = command.ToLowerInvariant();
@@ -65,19 +137,19 @@ namespace ScheduleParser
 			if (command.Contains(commandDescription))
 			{
 				var userInfo = command.Replace(commandDescription, string.Empty).Trim().Replace(" ", string.Empty).Split(',');
-				
-				if(userInfo.Length == 3)
+
+				if (userInfo.Length == 3)
 				{
 					FACULTY = userInfo[0];
 					COURSE = userInfo[1];
 					GROUP = userInfo[2];
 
 					var nodeCollection = GetNodes(FACULTY, COURSE, GROUP);
-					
-					if(nodeCollection != null)
+
+					if (nodeCollection != null)
 					{
-						sb.AppendLine($"Регистрация прошла успешно, держи список команд:)");
-						sb.AppendLine($"Получить расписание по дням недели, команды: пн, вт, ср, чт, пт, сб, вс");
+						sb.AppendLine($"Регистрация прошла успешно, держи список активных команд:)");
+						sb.AppendLine($"Получить расписание по дням недели: Пн, Вт, Ср, Чт, Пт, Сб, Вс");
 					}
 					else
 					{
@@ -99,83 +171,6 @@ namespace ScheduleParser
 			return sb.ToString();
 		}
 
-		private static string Bot(string command)
-		{
-			command = command.ToLowerInvariant();
-
-			var sb = new StringBuilder();
-			var isContainsKey = _commands.ContainsKey(command);
-
-			if (isContainsKey)
-			{
-				var commandType = _commands[command];
-
-				var nodeCollection = GetNodes(FACULTY, COURSE, GROUP);
-
-				var currentDataTable = ParseTable(nodeCollection, 0, nodeCollection.Count / 2);
-				currentDataTable = NormaliseTable(currentDataTable);
-
-				var result = string.Empty;
-
-				switch (commandType)
-				{
-					case CommandType.Monday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Tuesday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Wednesday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Thursday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Friday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Saturday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Sunday:
-						result = GetDayOfWeekSchedule(currentDataTable, commandType);
-						break;
-					case CommandType.Start:
-						result = Start();
-						break;
-					case CommandType.Today:
-						break;
-					case CommandType.Tomorrow:
-						break;
-					case CommandType.CurrentWeek:
-						break;
-					case CommandType.NextWeek:
-						break;
-				}
-
-				sb.AppendLine(result);
-			}
-			else
-			{
-				var commandDescription = CommandType.Registration.GetDescription().ToLowerInvariant();
-
-				command = command.ToLowerInvariant();
-
-				if (command.Contains(commandDescription))
-				{
-					var result = Registration(command);
-
-					sb.AppendLine(result);
-				}
-				else
-				{
-					sb.AppendLine($"Давай ближе к делу, я не люблю общаться:)");
-				}			
-			}
-
-			return sb.ToString();
-		}
-		 
 		private static string GetDayOfWeekSchedule(DataTable dataTable, CommandType commandType)
 		{
 			var sb = new StringBuilder();
@@ -197,7 +192,7 @@ namespace ScheduleParser
 			}
 			else
 			{
-				sb.AppendLine($"Воскресенье - единственный день для отдыха:)");
+				sb.AppendLine($"{CommandType.Sunday.GetDescription()} - единственный день для отдыха:)");
 			}
 
 			return sb.ToString();
@@ -215,11 +210,11 @@ namespace ScheduleParser
 			return nodeCollection;
 		}
 
-		private static DataTable ParseTable(HtmlNodeCollection nodes, int start, int finish)
+		private static DataTable ParseTable(HtmlNodeCollection nodes)
 		{
 			var dataTable = new DataTable("dataTable");
 
-			for (var i = start; i < finish; i++)
+			for (var i = 0; i < nodes.Count / 2; i++)
 			{
 				var node = nodes[i];
 				var childNodes = node.ChildNodes;

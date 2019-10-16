@@ -59,28 +59,34 @@ namespace ScheduleParser
 		Registration = 9,
 
 		/// <summary>
+		/// Сейчас
+		/// </summary>
+		[Description("Сейчас")]
+		Now = 10,
+
+		/// <summary>
 		/// Сегодня
 		/// </summary>
 		[Description("Сегодня")]
-		Today = 10,
+		Today = 11,
 
 		/// <summary>
 		/// Завтра
 		/// </summary>
 		[Description("Завтра")]
-		Tomorrow = 11,
+		Tomorrow = 12,
 
 		/// <summary>
 		/// Текущая неделя
 		/// </summary>
 		[Description("Текущая неделя")]
-		CurrentWeek = 12,
+		CurrentWeek = 13,
 
 		/// <summary>
 		/// Следующая неделя
 		/// </summary>
 		[Description("Следующая неделя")]
-		NextWeek = 13,
+		NextWeek = 14,
 		
 	}
 }
