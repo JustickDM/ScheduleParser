@@ -10,87 +10,224 @@ namespace ScheduleParser
 {
 	class Program
 	{
-		private static Dictionary<string, int> _days = new Dictionary<string, int>
-		{
-			{"понедельник", 1},
-			{"вторник", 2},
-			{"среда", 3},
-			{"четверг", 4},
-			{"пятница", 5},
-			{"суббота", 6},
-		};
-
 		private static Dictionary<string, CommandType> _commands = new Dictionary<string, CommandType>
 		{
+			{"пн", CommandType.Monday},
+			{"вт", CommandType.Tuesday},
+			{"ср", CommandType.Wednesday},
+			{"чт", CommandType.Thursday},
+			{"пт", CommandType.Friday},
+			{"сб", CommandType.Saturday},
+			{"вс", CommandType.Sunday},
+			{"старт", CommandType.Start},
+			{"регистрация", CommandType.Registration},
 			{"сегодня", CommandType.Today},
 			{"завтра", CommandType.Tomorrow},
-			{"текущая неделя", CommandType.CurrentWeek},
+			{"текущая", CommandType.CurrentWeek},
+			{"следующая", CommandType.NextWeek},
 		};
 
+		private static string FACULTY = "fitu";
+		private static string COURSE = "1";
+		private static string GROUP = "42m";
+
 		static void Main(string[] args)
-        {
-            var encoding = Encoding.GetEncoding("windows-1251");
-            var web = new HtmlWeb() { OverrideEncoding = encoding };
-            var html = web.Load("http://schedule.npi-tu.ru/schedule/fitu/1/42m");
-
-			//var table = html.GetElementbyId("table_week_active");
-
-			var day = DateTime.Now.DayOfWeek; //EN to RU
-
-			var nodes = html.DocumentNode.SelectNodes("//table/tr");
-			var dataTable = GetTable(nodes);
-
-			dataTable = NormaliseTable(dataTable);
-			
-            if (nodes != null)
-            {
-                Console.WriteLine("Таблица с расписанием скачана");			
-            }
-            else
-            {
-                Console.WriteLine("Нет таблицы с расписанием");
-            }
-
-			while(true)
+		{
+			while (true)
 			{
-				var selectedDay = Console.ReadLine();
-				var schedule = GetSelectedDaySchedule(dataTable, selectedDay);
+				var command = Console.ReadLine();
 
-				Console.WriteLine(schedule);
+				var result = Bot(command);
+
+				Console.WriteLine(result);
 			}
 		}
 
-		private static string GetSelectedDaySchedule(DataTable dataTable, string day)
+		private static string Start()
 		{
 			var sb = new StringBuilder();
 
-			var column = _days[day.ToLowerInvariant()];
+			sb.AppendLine($"Здравствуй, я бот для расписания нашего университета:)");
+			sb.AppendLine($"Для дальнейшего взаимодействия требуется зарегистрироваться - напиши слово \"Регистрация\" (Без ковычек), а затем укажи название факультета, номер курса и название группы");
+			sb.AppendLine($"Например: Регистрация fitu,1,42m");
 
-			for(var j = 0; j < dataTable.Rows.Count; j++)
+			return sb.ToString();
+		}
+
+		private static string Registration(string command)
+		{
+			var sb = new StringBuilder();
+			
+			var commandDescription = CommandType.Registration.GetDescription().ToLowerInvariant();
+
+			command = command.ToLowerInvariant();
+
+			if (command.Contains(commandDescription))
 			{
-				var lesson = dataTable.Rows[j][column].ToString();
-				var time = dataTable.Rows[j][0].ToString().Insert(5, "-");
-				sb.AppendLine($"{time} {lesson}");
+				var userInfo = command.Replace(commandDescription, string.Empty).Trim().Replace(" ", string.Empty).Split(',');
+				
+				if(userInfo.Length == 3)
+				{
+					FACULTY = userInfo[0];
+					COURSE = userInfo[1];
+					GROUP = userInfo[2];
+
+					var nodeCollection = GetNodes(FACULTY, COURSE, GROUP);
+					
+					if(nodeCollection != null)
+					{
+						sb.AppendLine($"Регистрация прошла успешно, держи список команд:)");
+						sb.AppendLine($"Получить расписание по дням недели, команды: пн, вт, ср, чт, пт, сб, вс");
+					}
+					else
+					{
+						sb.AppendLine($"Не могу найти нужное расписание, проверь правильность данных:)");
+					}
+				}
+				else
+				{
+					sb.AppendLine($"Введи все данные:)");
+				}
+			}
+			else
+			{
+				sb.AppendLine($"Если хочешь пользоваться - напиши команду правильно:)");
 			}
 
 			return sb.ToString();
 		}
 
-		private static DataTable GetTable(HtmlNodeCollection htmlNodes)
+		private static string Bot(string command)
+		{
+			command = command.ToLowerInvariant();
+
+			var sb = new StringBuilder();
+			var isContainsKey = _commands.ContainsKey(command);
+
+			if (isContainsKey)
+			{
+				var commandType = _commands[command];
+
+				var nodeCollection = GetNodes(FACULTY, COURSE, GROUP);
+
+				var currentDataTable = ParseTable(nodeCollection, 0, nodeCollection.Count / 2);
+				currentDataTable = NormaliseTable(currentDataTable);
+
+				var result = string.Empty;
+
+				switch (commandType)
+				{
+					case CommandType.Monday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Tuesday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Wednesday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Thursday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Friday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Saturday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Sunday:
+						result = GetDayOfWeekSchedule(currentDataTable, commandType);
+						break;
+					case CommandType.Start:
+						result = Start();
+						break;
+					case CommandType.Today:
+						break;
+					case CommandType.Tomorrow:
+						break;
+					case CommandType.CurrentWeek:
+						break;
+					case CommandType.NextWeek:
+						break;
+				}
+
+				sb.AppendLine(result);
+			}
+			else
+			{
+				var commandDescription = CommandType.Registration.GetDescription().ToLowerInvariant();
+
+				command = command.ToLowerInvariant();
+
+				if (command.Contains(commandDescription))
+				{
+					var result = Registration(command);
+
+					sb.AppendLine(result);
+				}
+				else
+				{
+					sb.AppendLine($"Давай ближе к делу, я не люблю общаться:)");
+				}			
+			}
+
+			return sb.ToString();
+		}
+		 
+		private static string GetDayOfWeekSchedule(DataTable dataTable, CommandType commandType)
+		{
+			var sb = new StringBuilder();
+			var columnOfDay = (int)commandType;
+
+			if (columnOfDay < (int)CommandType.Sunday)
+			{
+				var title = commandType.GetDescription();
+
+				sb.AppendLine($"{title}");
+
+				for (var j = 0; j < dataTable.Rows.Count; j++)
+				{
+					var time = dataTable.Rows[j][0].ToString().Insert(5, "-");
+					var lesson = dataTable.Rows[j][columnOfDay].ToString();
+
+					sb.AppendLine($"{time} {lesson}");
+				}
+			}
+			else
+			{
+				sb.AppendLine($"Воскресенье - единственный день для отдыха:)");
+			}
+
+			return sb.ToString();
+		}
+
+		private static HtmlNodeCollection GetNodes(string faculty, string course, string group)
+		{
+			var encoding = Encoding.GetEncoding("windows-1251");
+			var web = new HtmlWeb() { OverrideEncoding = encoding };
+			var htmlDocument = web.Load($"http://schedule.npi-tu.ru/schedule/{faculty}/{course}/{group}");
+			var nodeCollection = htmlDocument.DocumentNode.SelectNodes("//table/tr");
+
+			//var table = html.GetElementbyId("table_week_active");
+
+			return nodeCollection;
+		}
+
+		private static DataTable ParseTable(HtmlNodeCollection nodes, int start, int finish)
 		{
 			var dataTable = new DataTable("dataTable");
 
-			for(var i = 0; i < htmlNodes.Count / 2; i++)
+			for (var i = start; i < finish; i++)
 			{
-				var htmlNode = htmlNodes[i];
-				var htmlChildNodes = htmlNode.ChildNodes;
+				var node = nodes[i];
+				var childNodes = node.ChildNodes;
 				var dataRow = dataTable.NewRow();
 
-				for(var j = 0; j < htmlChildNodes.Count; j++)
+				for (var j = 0; j < childNodes.Count; j++)
 				{
-					var htmlChildNode = htmlChildNodes[j];
+					var htmlChildNode = childNodes[j];
 					var text = htmlChildNode.InnerText.Trim().Replace("\n", string.Empty).Replace("\t", string.Empty);
-					if(i == 0)
+					if (i == 0)
 					{
 						dataTable.Columns.Add(text);
 					}
