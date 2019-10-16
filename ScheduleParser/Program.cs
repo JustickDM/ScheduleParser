@@ -10,14 +10,21 @@ namespace ScheduleParser
 {
 	class Program
 	{
-		private static Dictionary<string, int> _days = new Dictionary<string, int>(6)
+		private static Dictionary<string, int> _days = new Dictionary<string, int>
 		{
-			{"пн", 1},
-			{"вт", 2},
-			{"ср", 3},
-			{"чт", 4},
-			{"пт", 5},
-			{"сб", 6},
+			{"понедельник", 1},
+			{"вторник", 2},
+			{"среда", 3},
+			{"четверг", 4},
+			{"пятница", 5},
+			{"суббота", 6},
+		};
+
+		private static Dictionary<string, CommandType> _commands = new Dictionary<string, CommandType>
+		{
+			{"сегодня", CommandType.Today},
+			{"завтра", CommandType.Tomorrow},
+			{"текущая неделя", CommandType.CurrentWeek},
 		};
 
 		static void Main(string[] args)
@@ -28,32 +35,45 @@ namespace ScheduleParser
 
 			//var table = html.GetElementbyId("table_week_active");
 
-            var nodes = html.DocumentNode.SelectNodes("//table/tr");
+			var day = DateTime.Now.DayOfWeek; //EN to RU
+
+			var nodes = html.DocumentNode.SelectNodes("//table/tr");
 			var dataTable = GetTable(nodes);
 
 			dataTable = NormaliseTable(dataTable);
 			
             if (nodes != null)
             {
-                Console.WriteLine("Таблица с расписанием скачана");
-
-				var column = _days["вт"];
-
-				var caption = dataTable.Columns[column].Caption;
-				Console.WriteLine(caption);
-
-				for(var j = 0; j < dataTable.Rows.Count; j++)
-				{
-					var lesson = dataTable.Rows[j][column].ToString();
-					var time = dataTable.Rows[j][0].ToString();
-					Console.WriteLine($"{time} {lesson}");
-				}
+                Console.WriteLine("Таблица с расписанием скачана");			
             }
             else
             {
                 Console.WriteLine("Нет таблицы с расписанием");
             }
-			Console.ReadKey();
+
+			while(true)
+			{
+				var selectedDay = Console.ReadLine();
+				var schedule = GetSelectedDaySchedule(dataTable, selectedDay);
+
+				Console.WriteLine(schedule);
+			}
+		}
+
+		private static string GetSelectedDaySchedule(DataTable dataTable, string day)
+		{
+			var sb = new StringBuilder();
+
+			var column = _days[day.ToLowerInvariant()];
+
+			for(var j = 0; j < dataTable.Rows.Count; j++)
+			{
+				var lesson = dataTable.Rows[j][column].ToString();
+				var time = dataTable.Rows[j][0].ToString().Insert(5, "-");
+				sb.AppendLine($"{time} {lesson}");
+			}
+
+			return sb.ToString();
 		}
 
 		private static DataTable GetTable(HtmlNodeCollection htmlNodes)
