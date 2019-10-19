@@ -2,7 +2,7 @@
 
 namespace ScheduleParser
 {
-	enum CommandType
+	enum BotCommandType
 	{
 		/// <summary>
 		/// Понедельник

@@ -46,8 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandType.cs" />
+    <Compile Include="BotCommandType.cs" />
     <Compile Include="EnumExtensions.cs" />
+    <Compile Include="Models\Entities\User.cs" />
+    <Compile Include="Models\UserVM.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
