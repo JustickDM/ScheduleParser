@@ -5,7 +5,6 @@ using Schedule.Models.Entities;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
 
 namespace ScheduleParser
@@ -40,14 +39,14 @@ namespace ScheduleParser
 
 		private static string FACULTY = "fitu";
 		private static int COURSE = 1;
-		private static string GROUP = "42m";
+		private static string GROUP = "4v";
 
 		private static DateTime _dateTime;
 		private static int _userId = 173605099;
 
 		static void Main(string[] args)
 		{
-			_dateTime = new DateTime(2019, 10, 18, 10, 29, 0);
+			_dateTime = DateTime.Now.AddDays(3);
 
 			while(true)
 			{
@@ -92,25 +91,25 @@ namespace ScheduleParser
 					switch(commandType)
 					{
 						case BotCommandType.Monday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Tuesday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Wednesday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Thursday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Friday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Saturday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.Sunday:
-							result = GetDayOfWeekSchedule(currentDataTable, commandType);
+							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
 						case BotCommandType.CurrentWeek:
 							result = GetCurrentWeekSchedule(currentDataTable, commandType);
@@ -163,29 +162,29 @@ namespace ScheduleParser
 				{
 					//using(var db = new DatabaseContext())
 					//{
-						//var user = db.Users.FirstOrDefault(u => u.UserId == _userId);
-						var user = new User()
-						{
-							Faculty = FACULTY,
-							Course = COURSE,
-							Group = GROUP
-						};
+					//var user = db.Users.FirstOrDefault(u => u.UserId == _userId);
+					var user = new User()
+					{
+						Faculty = FACULTY,
+						Course = COURSE,
+						Group = GROUP
+					};
 
-						//if(user != null)
-						//{
-						//	db.Users.Remove(user);
-						//}
+					//if(user != null)
+					//{
+					//	db.Users.Remove(user);
+					//}
 
-						//user = new User()
-						//{
-						//	UserId = _userId,
-						//	Faculty = faculty,
-						//	Course = int.Parse(course),
-						//	Group = group,
-						//};
+					//user = new User()
+					//{
+					//	UserId = _userId,
+					//	Faculty = faculty,
+					//	Course = int.Parse(course),
+					//	Group = group,
+					//};
 
-						//db.Users.Add(user);
-						//db.SaveChanges();
+					//db.Users.Add(user);
+					//db.SaveChanges();
 					//}
 
 					sb.AppendLine($"Регистрация прошла успешно, держи список активных команд:)");
@@ -207,24 +206,64 @@ namespace ScheduleParser
 			return sb.ToString();
 		}
 
-		private static string GetDayOfWeekSchedule(DataTable dataTable, BotCommandType commandType)
+		private static string GetDayOfWeekSchedule(DataTable dataTable, BotCommandType selectedCommandType, BotCommandType writedCommandType)
 		{
 			var sb = new StringBuilder();
-			var columnOfDay = (int)commandType;
+			var columnOfDay = (int)selectedCommandType;
+
+			var rowsCount = dataTable.Rows.Count;
+			var isNotDayOfWeekCommand = false;
+
+			if(selectedCommandType != writedCommandType)
+			{
+				switch(writedCommandType)
+				{
+					case BotCommandType.Today:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+					case BotCommandType.Tomorrow:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+					case BotCommandType.Now:
+						rowsCount /= 2;
+						isNotDayOfWeekCommand = true;
+						break;
+				}
+			}		
 
 			if(columnOfDay < (int)BotCommandType.Sunday)
 			{
 				var shortCaption = dataTable.Columns[columnOfDay].Caption;
 				var count = 0;
 
-				sb.AppendLine($"--------{shortCaption}--------");
+				if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Текущая--------");
+				else sb.AppendLine($"--------{shortCaption}--------");
 
-				for(var j = 0; j < dataTable.Rows.Count; j++)
+				for(var j = 0; j < rowsCount; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
+					{
+						if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
+						count = 0;
+						sb.AppendLine(string.Empty);
+						if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Следующая--------");
+						else sb.AppendLine($"--------{shortCaption}--------");
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, " - ");
+					}
+
 					var lesson = dataTable.Rows[j][columnOfDay].ToString();
 
-					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
 
 					sb.AppendLine($"{time} {lesson}");
 					count++;
@@ -257,10 +296,22 @@ namespace ScheduleParser
 
 				for(var j = 0; j < dataTable.Rows.Count; j++)
 				{
-					var time = dataTable.Rows[j][0].ToString().Insert(5, " - ");
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, " - ");
+					}
+
 					var lesson = dataTable.Rows[j][i].ToString();
 
-					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time)) continue;
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
 
 					sb.AppendLine($"{time} {lesson}");
 					count++;
@@ -275,23 +326,23 @@ namespace ScheduleParser
 
 		private static string GetTodaySchedule(DataTable dataTable, BotCommandType commandType)
 		{
-			var dayOfWeek = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
-			var day = _dayOfWeek[dayOfWeek];
-			var command = _commands[day];
+			var today = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
+			var todayDayOfweek = _dayOfWeek[today];
+			var todayCommand = _commands[todayDayOfweek];
 
-			var result = GetDayOfWeekSchedule(dataTable, command);
+			var result = GetDayOfWeekSchedule(dataTable, todayCommand, commandType);
 
 			return result;
 		}
 
 		private static string GetTomorrowSchedule(DataTable dataTable, BotCommandType commandType)
 		{
-			var tomorrowDay = _dateTime.AddDays(1);
-			var dayOfWeek = tomorrowDay.DayOfWeek.GetDescription().ToLowerInvariant();
-			var day = _dayOfWeek[dayOfWeek];
-			var command = _commands[day];
+			var tomorrow = _dateTime.AddDays(1);
+			var tomorrowDescription = tomorrow.DayOfWeek.GetDescription().ToLowerInvariant();
+			var tomorrowDayOfWeek = _dayOfWeek[tomorrowDescription];
+			var tomorrowCommand = _commands[tomorrowDayOfWeek];
 
-			var result = GetDayOfWeekSchedule(dataTable, command);
+			var result = GetDayOfWeekSchedule(dataTable, tomorrowCommand, commandType);
 
 			return result;
 		}
@@ -309,9 +360,18 @@ namespace ScheduleParser
 
 			sb.AppendLine($"--------{shortCaption}--------");
 
-			for(var j = 0; j < dataTable.Rows.Count; j++)
+			for(var j = 0; j < dataTable.Rows.Count / 2; j++)
 			{
-				var time = dataTable.Rows[j][0].ToString().Insert(5, "|");
+				var time = dataTable.Rows[j][0].ToString();
+				if(string.IsNullOrWhiteSpace(time))
+				{
+					continue;
+				}
+				else
+				{
+					time = time.Insert(5, "|");
+				}
+
 				var lesson = dataTable.Rows[j][columnOfDay].ToString();
 				var times = time.Split('|');
 				var timeStart = DateTime.Parse(times[0]);
@@ -363,7 +423,7 @@ namespace ScheduleParser
 		{
 			var dataTable = new DataTable("dataTable");
 
-			for(var i = 0; i < nodes.Count / 2; i++)
+			for(var i = 0; i < nodes.Count; i++)
 			{
 				var node = nodes[i];
 				var childNodes = node.ChildNodes;
