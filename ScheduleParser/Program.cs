@@ -24,6 +24,7 @@ namespace ScheduleParser
 			{"сегодня", BotCommandType.Today},
 			{"завтра", BotCommandType.Tomorrow},
 			{"текущая", BotCommandType.CurrentWeek},
+			{"следующая", BotCommandType.NextWeek},
 		};
 
 		private static Dictionary<string, string> _dayOfWeek = new Dictionary<string, string>
@@ -46,7 +47,7 @@ namespace ScheduleParser
 
 		static void Main(string[] args)
 		{
-			_dateTime = DateTime.Now;
+			_dateTime = DateTime.Now.AddDays(1);
 
 			while(true)
 			{
@@ -111,8 +112,8 @@ namespace ScheduleParser
 						case BotCommandType.Sunday:
 							result = GetDayOfWeekSchedule(currentDataTable, commandType, commandType);
 							break;
-						case BotCommandType.CurrentWeek:
-							result = GetCurrentWeekSchedule(currentDataTable, commandType);
+						case BotCommandType.Now:
+							result = GetNowSchedule(currentDataTable, commandType);
 							break;
 						case BotCommandType.Today:
 							result = GetTodaySchedule(currentDataTable, commandType);
@@ -120,8 +121,11 @@ namespace ScheduleParser
 						case BotCommandType.Tomorrow:
 							result = GetTomorrowSchedule(currentDataTable, commandType);
 							break;
-						case BotCommandType.Now:
-							result = GetNowSchedule(currentDataTable, commandType);
+						case BotCommandType.CurrentWeek:
+							result = GetWeekSchedule(currentDataTable, commandType);
+							break;
+						case BotCommandType.NextWeek:
+							result = GetWeekSchedule(currentDataTable, commandType);
 							break;
 					}
 				}
@@ -188,7 +192,7 @@ namespace ScheduleParser
 					//}
 
 					sb.AppendLine($"Регистрация прошла успешно, держи список активных команд:)");
-					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Текущая, Сегодня, Завтра, Сейчас");
+					sb.AppendLine($"Команды: Пн, Вт, Ср, Чт, Пт, Сб, Вс, Сейчас, Сегодня, Завтра, Текущая, Следующая");
 				}
 				else
 				{
@@ -212,15 +216,16 @@ namespace ScheduleParser
 			var columnOfDay = (int)selectedCommandType;
 
 			var rowsCount = dataTable.Rows.Count;
-			var isNotDayOfWeekCommand = false;
 			var rowStart = 0;
+			var rowFinish = rowsCount;
+			var isNotDayOfWeekCommand = false;
 
 			if(selectedCommandType != writedCommandType)
 			{
 				switch(writedCommandType)
 				{
 					case BotCommandType.Today:
-						rowsCount /= 2;
+						rowFinish /= 2;
 						isNotDayOfWeekCommand = true;
 						break;
 					case BotCommandType.Tomorrow:
@@ -230,12 +235,12 @@ namespace ScheduleParser
 						}
 						else
 						{
-							rowsCount /= 2;
+							rowFinish /= 2;
 						}
 						isNotDayOfWeekCommand = true;
 						break;
 					case BotCommandType.Now:
-						rowsCount /= 2;
+						rowFinish /= 2;
 						isNotDayOfWeekCommand = true;
 						break;
 				}
@@ -249,7 +254,7 @@ namespace ScheduleParser
 				if(!isNotDayOfWeekCommand) sb.AppendLine($"--------{shortCaption}, Текущая--------");
 				else sb.AppendLine($"--------{shortCaption}--------");
 
-				for(var j = rowStart; j < rowsCount; j++)
+				for(var j = rowStart; j < rowFinish; j++)
 				{
 					var time = dataTable.Rows[j][0].ToString();
 					if(string.IsNullOrWhiteSpace(time))
@@ -285,74 +290,6 @@ namespace ScheduleParser
 			}
 
 			return sb.ToString();
-		}
-
-		private static string GetCurrentWeekSchedule(DataTable dataTable, BotCommandType commandType)
-		{
-			var sb = new StringBuilder();
-			var title = commandType.GetDescription();
-
-			sb.AppendLine($"{title}");
-			sb.AppendLine(string.Empty);
-
-			for(var i = 1; i < dataTable.Columns.Count; i++)
-			{
-				var shortCaption = dataTable.Columns[i].Caption;
-				var count = 0;
-
-				sb.AppendLine($"--------{shortCaption}--------");
-
-				for(var j = 0; j < dataTable.Rows.Count; j++)
-				{
-					var time = dataTable.Rows[j][0].ToString();
-					if(string.IsNullOrWhiteSpace(time))
-					{
-						continue;
-					}
-					else
-					{
-						time = time.Insert(5, " - ");
-					}
-
-					var lesson = dataTable.Rows[j][i].ToString();
-
-					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
-					{
-						continue;
-					}
-
-					sb.AppendLine($"{time} {lesson}");
-					count++;
-				}
-
-				if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
-				if(i < dataTable.Columns.Count - 1) sb.AppendLine(string.Empty);
-			}
-
-			return sb.ToString();
-		}
-
-		private static string GetTodaySchedule(DataTable dataTable, BotCommandType commandType)
-		{
-			var today = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
-			var todayDayOfweek = _dayOfWeek[today];
-			var todayCommand = _commands[todayDayOfweek];
-
-			var result = GetDayOfWeekSchedule(dataTable, todayCommand, commandType);
-
-			return result;
-		}
-
-		private static string GetTomorrowSchedule(DataTable dataTable, BotCommandType commandType)
-		{
-			var tomorrow = _dateTime.AddDays(1);
-			var tomorrowDescription = tomorrow.DayOfWeek.GetDescription().ToLowerInvariant();
-			var tomorrowDayOfWeek = _dayOfWeek[tomorrowDescription];
-			var tomorrowCommand = _commands[tomorrowDayOfWeek];
-
-			var result = GetDayOfWeekSchedule(dataTable, tomorrowCommand, commandType);
-
-			return result;
 		}
 
 		private static string GetNowSchedule(DataTable dataTable, BotCommandType commandType)
@@ -416,6 +353,87 @@ namespace ScheduleParser
 			{
 				sb.AppendLine($"Сегодня воскресенье, а это значит, что сейчас пар нет и можно весь день тусииить!:)");
 				sb.AppendLine($"Или делать домашку на следующую неделю:D");
+			}
+
+			return sb.ToString();
+		}
+
+		private static string GetTodaySchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var today = _dateTime.DayOfWeek.GetDescription().ToLowerInvariant();
+			var todayDayOfweek = _dayOfWeek[today];
+			var todayCommand = _commands[todayDayOfweek];
+
+			var result = GetDayOfWeekSchedule(dataTable, todayCommand, commandType);
+
+			return result;
+		}
+
+		private static string GetTomorrowSchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var tomorrow = _dateTime.AddDays(1);
+			var tomorrowDescription = tomorrow.DayOfWeek.GetDescription().ToLowerInvariant();
+			var tomorrowDayOfWeek = _dayOfWeek[tomorrowDescription];
+			var tomorrowCommand = _commands[tomorrowDayOfWeek];
+
+			var result = GetDayOfWeekSchedule(dataTable, tomorrowCommand, commandType);
+
+			return result;
+		}
+
+		private static string GetWeekSchedule(DataTable dataTable, BotCommandType commandType)
+		{
+			var sb = new StringBuilder();
+			var title = commandType.GetDescription();
+			var rowsCount = dataTable.Rows.Count;
+			var rowStart = 0;
+			var rowFinish = rowsCount;
+
+			switch(commandType)
+			{
+				case BotCommandType.CurrentWeek:
+					rowFinish /= 2;
+					break;
+				case BotCommandType.NextWeek:
+					rowStart = rowsCount / 2;
+					break;
+			}
+
+			sb.AppendLine($"{title}");
+			sb.AppendLine(string.Empty);
+
+			for(var i = 1; i < dataTable.Columns.Count; i++)
+			{
+				var shortCaption = dataTable.Columns[i].Caption;
+				var count = 0;
+
+				sb.AppendLine($"--------{shortCaption}--------");
+
+				for(var j = rowStart; j < rowFinish; j++)
+				{
+					var time = dataTable.Rows[j][0].ToString();
+					if(string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
+					else
+					{
+						time = time.Insert(5, " - ");
+					}
+
+					var lesson = dataTable.Rows[j][i].ToString();
+
+					if(string.IsNullOrWhiteSpace(lesson) || string.IsNullOrWhiteSpace(time))
+					{
+						continue;
+					}
+
+					sb.AppendLine($"{time} {lesson}");
+					count++;
+				}
+
+				if(count == 0) sb.AppendLine($"Урааа, выходной!:)");
+				if(i < dataTable.Columns.Count - 1) sb.AppendLine(string.Empty);
 			}
 
 			return sb.ToString();

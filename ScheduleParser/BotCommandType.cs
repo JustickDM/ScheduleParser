@@ -47,46 +47,33 @@ namespace ScheduleParser
 		Sunday = 7,
 
 		/// <summary>
-		/// Старт
-		/// </summary>
-		[Description("Старт")]
-		Start = 8,
-
-		/// <summary>
-		/// Регистрация
-		/// </summary>
-		[Description("Регистрация")]
-		Registration = 9,
-
-		/// <summary>
 		/// Сейчас
 		/// </summary>
 		[Description("Сейчас")]
-		Now = 10,
+		Now = 8,
 
 		/// <summary>
 		/// Сегодня
 		/// </summary>
 		[Description("Сегодня")]
-		Today = 11,
+		Today = 9,
 
 		/// <summary>
 		/// Завтра
 		/// </summary>
 		[Description("Завтра")]
-		Tomorrow = 12,
+		Tomorrow = 10,
 
 		/// <summary>
 		/// Текущая неделя
 		/// </summary>
 		[Description("Текущая неделя")]
-		CurrentWeek = 13,
+		CurrentWeek = 11,
 
 		/// <summary>
 		/// Следующая неделя
 		/// </summary>
 		[Description("Следующая неделя")]
-		NextWeek = 14,
-		
+		NextWeek = 12,
 	}
 }
