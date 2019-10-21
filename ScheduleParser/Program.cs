@@ -44,10 +44,11 @@ namespace ScheduleParser
 
 		private static DateTime _dateTime;
 		private static int _userId = 173605099;
+		private static bool _isFirstWeek = true;
 
 		static void Main(string[] args)
 		{
-			_dateTime = DateTime.Now.AddDays(1);
+			_dateTime = DateTime.Now;
 
 			while(true)
 			{
@@ -457,9 +458,33 @@ namespace ScheduleParser
 		{
 			var dataTable = new DataTable("dataTable");
 
-			for(var i = 0; i < nodes.Count; i++)
+			var reserseNodeCollection = new List<HtmlNode>(nodes.Count);
+
+			if(!_isFirstWeek)
 			{
-				var node = nodes[i];
+				for(var i = 0; i < nodes.Count; i++)
+				{
+					if(i >= 8)
+					{
+						reserseNodeCollection.Add(nodes[i - nodes.Count / 2]);
+					}
+					else
+					{
+						reserseNodeCollection.Add(nodes[i + nodes.Count / 2]);
+					}
+				}
+			}
+			else
+			{
+				for(var i = 0; i < nodes.Count; i++)
+				{
+					reserseNodeCollection.Add(nodes[i]);
+				}
+			}
+
+			for(var i = 0; i < reserseNodeCollection.Count; i++)
+			{
+				var node = reserseNodeCollection[i];
 				var childNodes = node.ChildNodes;
 				var dataRow = dataTable.NewRow();
 
