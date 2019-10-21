@@ -44,7 +44,7 @@ namespace ScheduleParser
 
 		private static DateTime _dateTime;
 		private static int _userId = 173605099;
-		private static bool _isFirstWeek = true;
+		private static bool _isFirstWeek = false;
 
 		static void Main(string[] args)
 		{
@@ -464,7 +464,7 @@ namespace ScheduleParser
 			{
 				for(var i = 0; i < nodes.Count; i++)
 				{
-					if(i >= 8)
+					if(i >= nodes.Count / 2)
 					{
 						reserseNodeCollection.Add(nodes[i - nodes.Count / 2]);
 					}
